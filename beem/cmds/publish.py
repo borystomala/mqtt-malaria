@@ -41,17 +41,21 @@ import beem.bridge
 import beem.msgs
 
 
-def my_custom_msg_generator(sequence_length):
+def my_custom_msg_generator(sequence_length, id):
     """
     An example of a custom msg generator.
 
     You must return a tuple of sequence number, topic and payload
     on each iteration.
     """
-    seq = 0
-    while seq < sequence_length:
-        yield (seq, "magic_topic", "very boring payload")
-        seq += 1
+    num = 1
+    while num <= sequence_length:
+        topic = "v1/" + id + "/data?ct=json"
+        payload = bytearray()
+        payload.extend('{"r":[{"k":"seq","v":' + str(num) + '}]}')
+        yield (num, topic, payload)
+        num = num + 1
+        time.sleep(1)
 
 
 def _worker(options, proc_num, auth=None):
@@ -61,21 +65,21 @@ def _worker(options, proc_num, auth=None):
     """
     # Make a new clientid with our worker process number
     cid = "%s-%d" % (options.clientid, proc_num)
+    print "rcid " + cid
     if options.bridge:
         ts = beem.bridge.BridgingSender(options.host, options.port, cid, auth)
         # This is _probably_ what you want if you are specifying a key file
         # This would correspond with using ids as clientids, and acls
         if auth:
             cid = auth.split(":")[0]
-    else:
-        # FIXME - add auth support here too dummy!
-        ts = beem.load.TrackingSender(options.host, options.port, cid)
+    else:        
+        ts = beem.load.TrackingSender(options.host, options.port, cid, auth)
 
     # Provide a custom generator
-    #msg_gen = my_custom_msg_generator(options.msg_count)
-    msg_gen = beem.msgs.createGenerator(cid, options)
+    msg_gen = my_custom_msg_generator(options.msg_count, auth.split(",")[0])
+    #msg_gen = beem.msgs.createGenerator(cid, options)
     # This helps introduce jitter so you don't have many threads all in sync
-    time.sleep(random.uniform(1, 10))
+    time.sleep(random.uniform(1, 60))
     ts.run(msg_gen, qos=options.qos)
     return ts.stats()
 
@@ -154,7 +158,7 @@ def run(options):
     time_start = time.time()
     # This should be pretty easy to use for passwords as well as PSK....
     if options.psk_file:
-        assert options.bridge, "PSK is only supported with bridging due to python limitations, sorry about that"
+        #assert options.bridge, "PSK is only supported with bridging due to python limitations, sorry about that"
         auth_pairs = options.psk_file.readlines()
         # Can only fire up as many processes as we have keys!
         # FIXME - not true with threading!!

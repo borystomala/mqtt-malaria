@@ -60,11 +60,14 @@ class TrackingSender():
     """
     msg_statuses = {}
 
-    def __init__(self, host, port, cid):
+    def __init__(self, host, port, cid, auth):
         self.cid = cid
         self.log = logging.getLogger(__name__ + ":" + cid)
         self.mqttc = mqtt.Client(cid)
         self.mqttc.on_publish = self.publish_handler
+        if auth is not None:
+            a = auth.split(",")
+            self.mqttc.username_pw_set("red-cat:" + a[0], a[1])
         # TODO - you _probably_ want to tweak this
         if hasattr(self.mqttc, "max_inflight_messages_set"):
             self.mqttc.max_inflight_messages_set(200)

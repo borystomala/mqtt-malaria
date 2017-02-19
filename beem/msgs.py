@@ -36,9 +36,8 @@ def GaussianSize(cid, sequence_size, target_size):
     """
     num = 1
     while num <= sequence_size:
-        topic = "mqtt-malaria/%s/data/%d/%d" % (cid, num, sequence_size)
-        real_size = int(random.gauss(target_size, target_size / 20))
-        payload = ''.join(random.choice(string.hexdigits) for _ in range(real_size))
+        topic = "vi/iZxHJL8-TrayvM2GU0TkQA/data?ct=json"
+        payload = '{"r":[{"k":"temp","v":13.1}]}'
         yield (num, topic, payload)
         num = num + 1
 
